@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>World in a box</title>
+</head>
+<body>
+<script type="text/javascript" src="game.js"></script>
+<script type="text/javascript" src="audio.js"></script>
+<script type="text/javascript" src="splashScreen.js"></script>
+<script type="text/javascript" src="viewport.js"></script>
+<script type="text/javascript" src="map.js"></script>
+<script type="text/javascript" src="minimap.js"></script>
+<script type="text/javascript" src="ship.js"></script>
+<script type="text/javascript" src="planet.js"></script>
+<script type="text/javascript">
+
+var lastSecond = 0;
+var updateGame = function(t) {
+    var second = (t / 1000 | 0);
+    if (lastSecond !== second && --game.leftToPlay <= 0) {
+        game.over();
+        return;
+    }
+    lastSecond = second;
+
+    // updating
+    ship.update();
+    viewport.update();
+    for (var i = 0; i < game.planets.length; i++) {
+        game.planets[i].update();
+    }
+
+    // drawing
+    map.draw();
+    for (i = 0; i < game.planets.length; i++) {
+        game.planets[i].draw();
+    }
+    ship.draw();
+    minimap.draw();
+};
+
+var update = function(t) {
+    game.requestId = requestAnimationFrame(update);
+
+    if (game.showSplashScreen) {
+        splashScreen.draw();
+    } else {
+        updateGame(t);
+    }
+};
+
+var stop = function() {
+    cancelAnimationFrame(game.requestId);
+    game.requestId = null;
+};
+
+var loadImages = function(images, callback) {
+    var img;
+    var loaded = 0;
+    var onload = function() {
+        loaded++;
+        var key = this.src.split('/').reverse()[0];
+        game.loadedImages[key] = this;
+        if (loaded === images.length) {
+            callback();
+        }
+    };
+    for (var i = 0; i < images.length; i++) {
+        img = new Image();
+        img.src = images[i];
+        img.onload = onload;
+    }
+};
+
+var reset = function() {
+    ship.init();
+    var d;
+    document.body.onkeydown = function(e) {
+        if (game.requestId === null && e.which !== 32) {
+            return;
+        }
+
+        if (e.which === 82 /* key R */) {
+            reset();
+        } else if (e.which === 32 /* key space */) {
+            var c = game.requestId === null ? update() : stop();
+        } else if (e.which === 37 /* key left */) {
+            d = e.shiftKey ? 4 : 18;
+            ship.rotation -= Math.PI / d;
+        } else if (e.which === 39 /* key right */) {
+            d = e.shiftKey ? 2 : 18;
+            ship.rotation += Math.PI / d;
+        } else if (e.which === 38 /* key up */) {
+            ship.velocity.x += ship.acceleration * Math.cos(ship.rotation);
+            ship.velocity.y += ship.acceleration * Math.sin(ship.rotation);
+            var i = Math.random() < 0.5 ? 1 : 2;
+        } else if (e.which === 40 /* key down */) {
+            var velAlpha = atan(ship.velocity.x, ship.velocity.y);
+            ship.velocity.x *= 0.5;
+            ship.velocity.y *= 0.5;
+        }
+    };
+
+    game.score = 0;
+    game.maxScore = 0;
+    game.planets = [];
+    var pl;
+    for (var i = 0; i < 10; i++) {
+        pl = new Planet(
+            p(0, 0),
+            (i + 1) * 300,
+            Math.random() * Math.PI * 2,
+            Math.random() * 0.01,
+            Math.random() * 200 | 0
+        );
+        game.maxScore += pl.leftToCircle;
+        game.planets.push(pl);
+    }
+
+    game.leftToPlay = 600;
+};
+
+var start = function() {
+
+    game.c = document.createElement('canvas');
+    viewport.width = game.c.width = game.WIDTH;
+    viewport.height = game.c.height = game.HEIGHT;
+    document.body.appendChild(game.c);
+    game.ctx = game.c.getContext('2d');
+
+    game.audio = new Audio([
+        'orbit1.wav',
+        'orbit2.wav',
+        'orbit3.wav',
+        'orbit4.wav'
+    ]);
+    game.audio.loadSounds(function() {
+        splashScreen.init();
+        loadImages([
+            'ship.png',
+            'planet.png',
+            'planet_done.png',
+            'bg.png'
+        ], update);
+    });
+};
+
+window.onload = start;
+</script>
+</body>
+</html>
