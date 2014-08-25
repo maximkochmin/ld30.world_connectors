@@ -1,10 +1,18 @@
 var Audio = function(sounds) {
-    this.ctx = new webkitAudioContext();
+    try {
+        this.ctx = new webkitAudioContext();
+    } catch (e) {
+        this.ctx = null;
+    }
     this.sounds = sounds;
 };
 
 
 Audio.prototype.loadSounds = function(callback) {
+    if (this.ctx === null) {
+        callback();
+        return;
+    }
     this.buffers = [];
     this.callback = callback;
     var request;
@@ -35,6 +43,9 @@ Audio.prototype.onBufferDecoded = function(buffer) {
 
 
 Audio.prototype.playSound = function(name) {
+    if (this.ctx === null) {
+        return;
+    }
     name = this.sounds.indexOf(name);
     var s = this.ctx.createBufferSource();
     s.buffer = this.buffers[name];

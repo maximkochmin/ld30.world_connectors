@@ -6,6 +6,7 @@
     <title>World in a box</title>
 </head>
 <body>
+<div id="loading">Loading, please wait...</div>
 <script type="text/javascript" src="game.js"></script>
 <script type="text/javascript" src="Audio.js"></script>
 <script type="text/javascript" src="splashScreen.js"></script>
@@ -64,6 +65,7 @@ var loadImages = function(images, callback) {
         var key = this.src.split('/').reverse()[0];
         game.loadedImages[key] = this;
         if (loaded === images.length) {
+            document.getElementById('loading').style.display = 'none';
             callback();
         }
     };
