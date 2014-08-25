@@ -6,7 +6,7 @@ var ship = {
     sprite: 'ship.png',
     width: 32,
     height: 32,
-    acceleration: 2,
+    acceleration: 8,
     epsilon: 1e-8,
     mass: 1,
     maxVelocity: 20
@@ -52,8 +52,14 @@ ship.update = function() {
     this.pos.x += this.velocity.x;
     this.pos.y += this.velocity.y;
 
+
+    var d = 30;
     if (this.forces.x !== 0 || this.forces.y !== 0) {
         ship.rotation = atan(ship.velocity.x, ship.velocity.y);
+    } else if (game.leftPressed) {
+        ship.rotation -= Math.PI / d;
+    } else if (game.rightPressed) {
+        ship.rotation += Math.PI / d;
     }
 
     this.tail.push(p(this.pos.x, this.pos.y));
